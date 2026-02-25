@@ -2,6 +2,7 @@
 
 import { useI18n } from '@/lib/i18n/context'
 import LanguageSwitcher from './LanguageSwitcher'
+import NotificationBell from './NotificationBell'
 
 interface HUDStatsProps {
   active: number
@@ -29,7 +30,8 @@ export default function HUDStats({ active, expiring, expired }: HUDStatsProps) {
         </div>
       </div>
 
-      <div className="fixed top-6 right-24 z-20">
+      <div className="fixed top-6 right-24 z-20 flex items-center gap-3">
+        <NotificationBell />
         <LanguageSwitcher />
       </div>
     </>
