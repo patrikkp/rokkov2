@@ -1,21 +1,25 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ParticlesBackground from '@/components/ParticlesBackground'
 import { useI18n } from '@/lib/i18n/context'
 
-export default function AuthPage() {
+function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const { t } = useI18n()
+
+  const urlError = searchParams.get('error')
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,16 +32,17 @@ export default function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/app`,
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         })
         if (error) throw error
 
-        // If email confirmation is disabled, session is returned immediately
         if (data.session) {
+          // Email confirmation disabled — direct login
           router.push('/app')
         } else {
-          alert(t('auth.checkEmail'))
+          // Email confirmation enabled — show check email screen
+          setEmailSent(true)
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -63,7 +68,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/app`,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error
@@ -74,6 +79,46 @@ export default function AuthPage() {
     }
   }
 
+  // ── Email sent screen ──────────────────────────────────────────
+  if (emailSent) {
+    return (
+      <main className="relative min-h-screen flex items-center justify-center px-6">
+        <ParticlesBackground />
+        <div className="relative z-10 w-full max-w-md text-center">
+          <div className="w-16 h-16 mx-auto mb-8 border border-accent flex items-center justify-center">
+            <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight mb-4 uppercase">
+            Check your email
+          </h1>
+          <p className="text-gray-400 text-sm uppercase tracking-wider mb-2">
+            We sent a confirmation link to
+          </p>
+          <p className="text-accent text-sm mb-8 font-medium">{email}</p>
+          <p className="text-gray-600 text-xs uppercase tracking-wider leading-relaxed mb-12">
+            Click the link in the email to activate your account.<br />
+            The link expires in 24 hours.
+          </p>
+          <button
+            onClick={() => {
+              setEmailSent(false)
+              setIsSignUp(false)
+              setEmail('')
+              setPassword('')
+            }}
+            className="text-sm text-gray-500 hover:text-accent transition-colors uppercase tracking-wider"
+          >
+            ← Back to login
+          </button>
+        </div>
+      </main>
+    )
+  }
+
+  // ── Main auth form ─────────────────────────────────────────────
   return (
     <main className="relative min-h-screen flex items-center justify-center px-6">
       <ParticlesBackground />
@@ -92,6 +137,12 @@ export default function AuthPage() {
         <p className="text-gray-500 text-center mb-12 uppercase tracking-wider text-xs">
           {isSignUp ? t('auth.createAccount') : t('auth.welcomeBack')}
         </p>
+
+        {urlError === 'confirmation_failed' && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 text-red-400 text-sm text-center uppercase tracking-wide">
+            Confirmation link is invalid or expired. Please try again.
+          </div>
+        )}
 
         <form onSubmit={handleEmailAuth} className="space-y-6">
           <div>
@@ -170,5 +221,13 @@ export default function AuthPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+      <AuthForm />
+    </Suspense>
   )
 }
