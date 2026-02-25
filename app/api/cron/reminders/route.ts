@@ -4,9 +4,6 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-// Returns YYYY-MM-DD in local time (avoids UTC timezone offset issues)
 function toLocalDateString(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -61,27 +58,36 @@ export async function GET(request: Request) {
       .eq('user_id', setting.user_id)
       .eq('warranty_expires', targetDateStr)
 
+    if (!warranties || warranties.length === 0) {
+      log.push({ user_id: setting.user_id, targetDate: targetDateStr, warrantiesFound: 0 })
+      continue
+    }
+
+    // Get user email
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(setting.user_id)
+    const userEmail = userData?.user?.email ?? null
+
+    // Send email
+    let emailError = null
+    if (userEmail) {
+      const { error } = await resend.emails.send({
+        from: process.env.FROM_EMAIL || 'Rokko <onboarding@resend.dev>',
+        to: userEmail,
+        subject: `⚠️ ${warranties.length} warranty${warranties.length > 1 ? 'ies' : ''} expiring in ${setting.reminder_days} day${setting.reminder_days > 1 ? 's' : ''}`,
+        html: buildEmailHtml(warranties, setting.reminder_days),
+      })
+      emailError = error?.message ?? null
+      if (!error) emailsSent++
+    }
+
     log.push({
       user_id: setting.user_id,
-      reminder_days: setting.reminder_days,
       targetDate: targetDateStr,
-      warrantiesFound: warranties?.length ?? 0,
-      warrantyError: wError?.message ?? null,
+      warrantiesFound: warranties.length,
+      userEmail: userEmail ? userEmail.replace(/(.{2}).*@/, '$1***@') : null,
+      userError: userError?.message ?? null,
+      emailError,
     })
-
-    if (!warranties || warranties.length === 0) continue
-
-    const { data: userData } = await supabase.auth.admin.getUserById(setting.user_id)
-    if (!userData?.user?.email) continue
-
-    const { error: emailError } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'Rokko <onboarding@resend.dev>',
-      to: userData.user.email,
-      subject: `⚠️ ${warranties.length} warranty${warranties.length > 1 ? 'ies' : ''} expiring in ${setting.reminder_days} day${setting.reminder_days > 1 ? 's' : ''}`,
-      html: buildEmailHtml(warranties, setting.reminder_days),
-    })
-
-    if (!emailError) emailsSent++
   }
 
   return NextResponse.json({ success: true, emailsSent, debug, log })
