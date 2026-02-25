@@ -6,6 +6,14 @@ export const dynamic = 'force-dynamic'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Returns YYYY-MM-DD in local time (avoids UTC timezone offset issues)
+function toLocalDateString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -18,14 +26,12 @@ export async function GET(request: Request) {
   )
 
   const today = new Date()
-  today.setHours(0, 0, 0, 0)
 
-  // DEBUG: provjeri env varijable
   const debug = {
     hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
     hasResendKey: !!process.env.RESEND_API_KEY,
     hasCronSecret: !!process.env.CRON_SECRET,
-    today: today.toISOString(),
+    today: toLocalDateString(today),
   }
 
   const { data: settings, error: settingsError } = await supabase
@@ -47,7 +53,7 @@ export async function GET(request: Request) {
   for (const setting of settings) {
     const targetDate = new Date(today)
     targetDate.setDate(targetDate.getDate() + setting.reminder_days)
-    const targetDateStr = targetDate.toISOString().split('T')[0]
+    const targetDateStr = toLocalDateString(targetDate)
 
     const { data: warranties, error: wError } = await supabase
       .from('warranties')
