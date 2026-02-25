@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     hasResendKey: !!process.env.RESEND_API_KEY,
     hasCronSecret: !!process.env.CRON_SECRET,
     today: toLocalDateString(today),
+    testEmailOverride: !!process.env.TEST_EMAIL,
   }
 
   const { data: settings, error: settingsError } = await supabase
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'No users with reminders enabled', emailsSent: 0, debug })
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY)
   let emailsSent = 0
   const log: object[] = []
 
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
     targetDate.setDate(targetDate.getDate() + setting.reminder_days)
     const targetDateStr = toLocalDateString(targetDate)
 
-    const { data: warranties, error: wError } = await supabase
+    const { data: warranties } = await supabase
       .from('warranties')
       .select('product_name, brand, warranty_expires')
       .eq('user_id', setting.user_id)
@@ -63,16 +65,18 @@ export async function GET(request: Request) {
       continue
     }
 
-    // Get user email
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(setting.user_id)
     const userEmail = userData?.user?.email ?? null
 
-    // Send email
+    // TEST_EMAIL override: koristi se kad nema verificirane domene u Resendu
+    // Na produkciji s domenom makni TEST_EMAIL iz env-a
+    const sendTo = process.env.TEST_EMAIL || userEmail
+
     let emailError = null
-    if (userEmail) {
+    if (sendTo) {
       const { error } = await resend.emails.send({
         from: process.env.FROM_EMAIL || 'Rokko <onboarding@resend.dev>',
-        to: userEmail,
+        to: sendTo,
         subject: `⚠️ ${warranties.length} warranty${warranties.length > 1 ? 'ies' : ''} expiring in ${setting.reminder_days} day${setting.reminder_days > 1 ? 's' : ''}`,
         html: buildEmailHtml(warranties, setting.reminder_days),
       })
@@ -81,10 +85,9 @@ export async function GET(request: Request) {
     }
 
     log.push({
-      user_id: setting.user_id,
       targetDate: targetDateStr,
       warrantiesFound: warranties.length,
-      userEmail: userEmail ? userEmail.replace(/(.{2}).*@/, '$1***@') : null,
+      sentTo: sendTo ? sendTo.replace(/(.{2}).*@/, '$1***@') : null,
       userError: userError?.message ?? null,
       emailError,
     })
