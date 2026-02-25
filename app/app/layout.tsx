@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import NotificationBanner from '@/components/NotificationBanner'
 
 export default async function AppLayout({
   children,
@@ -13,5 +14,10 @@ export default async function AppLayout({
     redirect('/auth')
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <NotificationBanner />
+    </>
+  )
 }
