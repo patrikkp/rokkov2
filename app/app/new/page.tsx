@@ -7,6 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useI18n } from '@/lib/i18n/context'
 import EUWarrantyInfo from '@/components/EUWarrantyInfo'
 
+const MAX_FILE_SIZE_MB = 10
+const MAX_TEXT_LENGTH = 500
+const MAX_NAME_LENGTH = 100
+
 export default function NewWarrantyPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -32,8 +36,8 @@ export default function NewWarrantyPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 40 * 1024 * 1024) {
-        setError(t('new.fileTooLarge'))
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setError(`File must be under ${MAX_FILE_SIZE_MB}MB`)
         return
       }
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -48,8 +52,35 @@ export default function NewWarrantyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+
+    // Client-side validation
+    if (formData.product_name.trim().length === 0) {
+      setError('Product name is required')
+      return
+    }
+    if (formData.product_name.length > MAX_NAME_LENGTH) {
+      setError(`Product name must be under ${MAX_NAME_LENGTH} characters`)
+      return
+    }
+    if (formData.notes.length > MAX_TEXT_LENGTH) {
+      setError(`Notes must be under ${MAX_TEXT_LENGTH} characters`)
+      return
+    }
+    if (formData.warranty_expires < formData.purchase_date) {
+      setError('Warranty expiry date must be after purchase date')
+      return
+    }
+    if (formData.price && parseFloat(formData.price) < 0) {
+      setError('Price cannot be negative')
+      return
+    }
+    if (formData.price && parseFloat(formData.price) > 9_999_999) {
+      setError('Price value is too large')
+      return
+    }
+
+    setLoading(true)
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -59,9 +90,9 @@ export default function NewWarrantyPage() {
 
       if (receiptFile) {
         setUploading(true)
-        const fileExt = receiptFile.name.split('.').pop()
+        const fileExt = receiptFile.name.split('.').pop()?.toLowerCase()
         const fileName = `${user.id}/${Date.now()}.${fileExt}`
-        
+
         const { error: uploadError } = await supabase.storage
           .from('receipts')
           .upload(fileName, receiptFile)
@@ -76,23 +107,24 @@ export default function NewWarrantyPage() {
         .from('warranties')
         .insert({
           user_id: user.id,
-          product_name: formData.product_name,
-          brand: formData.brand || null,
+          product_name: formData.product_name.trim().slice(0, MAX_NAME_LENGTH),
+          brand: formData.brand.trim().slice(0, MAX_NAME_LENGTH) || null,
           purchase_date: formData.purchase_date,
           warranty_expires: formData.warranty_expires,
-          category: formData.category || null,
-          store: formData.store || null,
+          category: formData.category.trim().slice(0, 50) || null,
+          store: formData.store.trim().slice(0, MAX_NAME_LENGTH) || null,
           price: formData.price ? parseFloat(formData.price) : null,
-          serial_number: formData.serial_number || null,
-          notes: formData.notes || null,
+          serial_number: formData.serial_number.trim().slice(0, 100) || null,
+          notes: formData.notes.trim().slice(0, MAX_TEXT_LENGTH) || null,
           receipt_url: receiptUrl,
         })
 
       if (insertError) throw insertError
 
       router.push('/app')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred'
+      setError(message)
       setUploading(false)
     } finally {
       setLoading(false)
@@ -121,6 +153,7 @@ export default function NewWarrantyPage() {
             <input
               type="text"
               required
+              maxLength={MAX_NAME_LENGTH}
               value={formData.product_name}
               onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
               className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -135,6 +168,7 @@ export default function NewWarrantyPage() {
               </label>
               <input
                 type="text"
+                maxLength={MAX_NAME_LENGTH}
                 value={formData.brand}
                 onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -148,6 +182,7 @@ export default function NewWarrantyPage() {
               </label>
               <input
                 type="text"
+                maxLength={50}
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -177,6 +212,7 @@ export default function NewWarrantyPage() {
                 type="date"
                 required
                 value={formData.warranty_expires}
+                min={formData.purchase_date || undefined}
                 onChange={(e) => setFormData({ ...formData, warranty_expires: e.target.value })}
                 className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
               />
@@ -190,6 +226,7 @@ export default function NewWarrantyPage() {
               </label>
               <input
                 type="text"
+                maxLength={MAX_NAME_LENGTH}
                 value={formData.store}
                 onChange={(e) => setFormData({ ...formData, store: e.target.value })}
                 className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -203,6 +240,8 @@ export default function NewWarrantyPage() {
               <input
                 type="number"
                 step="0.01"
+                min="0"
+                max="9999999"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -217,6 +256,7 @@ export default function NewWarrantyPage() {
             </label>
             <input
               type="text"
+              maxLength={100}
               value={formData.serial_number}
               onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
               className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white"
@@ -230,16 +270,21 @@ export default function NewWarrantyPage() {
             </label>
             <textarea
               value={formData.notes}
+              maxLength={MAX_TEXT_LENGTH}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={4}
               className="w-full px-4 py-3 bg-transparent border border-gray-800 focus:border-accent outline-none transition-colors text-white resize-none"
               placeholder={t('new.additionalInfo')}
             />
+            <p className="text-xs text-gray-600 mt-1 text-right">
+              {formData.notes.length}/{MAX_TEXT_LENGTH}
+            </p>
           </div>
 
           <div>
             <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">
               {t('new.receipt')}
+              <span className="ml-2 text-gray-600">(max {MAX_FILE_SIZE_MB}MB)</span>
             </label>
             <input
               type="file"

@@ -21,79 +21,71 @@ export async function GET(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const today = new Date()
-
-  const debug = {
-    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    hasResendKey: !!process.env.RESEND_API_KEY,
-    hasCronSecret: !!process.env.CRON_SECRET,
-    today: toLocalDateString(today),
-    testEmailOverride: !!process.env.TEST_EMAIL,
-  }
+  const isDev = process.env.NODE_ENV === 'development'
 
   const { data: settings, error: settingsError } = await supabase
     .from('user_settings')
-    .select('user_id, reminder_days, reminder_enabled')
+    .select('user_id, reminder_days')
     .eq('reminder_enabled', true)
 
   if (settingsError) {
-    return NextResponse.json({ error: settingsError.message, debug }, { status: 500 })
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
   if (!settings || settings.length === 0) {
-    return NextResponse.json({ message: 'No users with reminders enabled', emailsSent: 0, debug })
+    return NextResponse.json({ success: true, emailsSent: 0 })
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY)
-  let emailsSent = 0
-  const log: object[] = []
+  // Process all users in parallel for better performance
+  const results = await Promise.allSettled(
+    settings.map(async (setting) => {
+      const targetDate = new Date(today)
+      targetDate.setDate(targetDate.getDate() + setting.reminder_days)
+      const targetDateStr = toLocalDateString(targetDate)
 
-  for (const setting of settings) {
-    const targetDate = new Date(today)
-    targetDate.setDate(targetDate.getDate() + setting.reminder_days)
-    const targetDateStr = toLocalDateString(targetDate)
+      const { data: warranties } = await supabase
+        .from('warranties')
+        .select('product_name, brand, warranty_expires')
+        .eq('user_id', setting.user_id)
+        .eq('warranty_expires', targetDateStr)
 
-    const { data: warranties } = await supabase
-      .from('warranties')
-      .select('product_name, brand, warranty_expires')
-      .eq('user_id', setting.user_id)
-      .eq('warranty_expires', targetDateStr)
+      if (!warranties || warranties.length === 0) return false
 
-    if (!warranties || warranties.length === 0) {
-      log.push({ user_id: setting.user_id, targetDate: targetDateStr, warrantiesFound: 0 })
-      continue
-    }
+      const { data: userData } = await supabase.auth.admin.getUserById(setting.user_id)
+      const sendTo = process.env.TEST_EMAIL || userData?.user?.email
+      if (!sendTo) return false
 
-    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(setting.user_id)
-    const userEmail = userData?.user?.email ?? null
-
-    // TEST_EMAIL override: koristi se kad nema verificirane domene u Resendu
-    // Na produkciji s domenom makni TEST_EMAIL iz env-a
-    const sendTo = process.env.TEST_EMAIL || userEmail
-
-    let emailError = null
-    if (sendTo) {
       const { error } = await resend.emails.send({
         from: process.env.FROM_EMAIL || 'Rokko <onboarding@resend.dev>',
         to: sendTo,
         subject: `⚠️ ${warranties.length} warranty${warranties.length > 1 ? 'ies' : ''} expiring in ${setting.reminder_days} day${setting.reminder_days > 1 ? 's' : ''}`,
         html: buildEmailHtml(warranties, setting.reminder_days),
       })
-      emailError = error?.message ?? null
-      if (!error) emailsSent++
-    }
 
-    log.push({
-      targetDate: targetDateStr,
-      warrantiesFound: warranties.length,
-      sentTo: sendTo ? sendTo.replace(/(.{2}).*@/, '$1***@') : null,
-      userError: userError?.message ?? null,
-      emailError,
+      return !error
+    })
+  )
+
+  const emailsSent = results.filter(
+    (r) => r.status === 'fulfilled' && r.value === true
+  ).length
+
+  // Only expose debug info in development
+  if (isDev) {
+    return NextResponse.json({
+      success: true,
+      emailsSent,
+      debug: {
+        today: toLocalDateString(today),
+        usersChecked: settings.length,
+        results: results.map((r) => (r.status === 'fulfilled' ? r.value : r.reason)),
+      },
     })
   }
 
-  return NextResponse.json({ success: true, emailsSent, debug, log })
+  return NextResponse.json({ success: true, emailsSent })
 }
 
 function buildEmailHtml(

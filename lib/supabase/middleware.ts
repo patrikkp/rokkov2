@@ -36,6 +36,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Always allow auth/callback (email confirmation flow)
+  if (request.nextUrl.pathname.startsWith('/auth/callback')) {
+    return response
+  }
+
   // Redirect unauthenticated users away from /app
   if (!user && request.nextUrl.pathname.startsWith('/app')) {
     return NextResponse.redirect(new URL('/auth', request.url))
