@@ -24,7 +24,7 @@ export default function AuthPage() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -32,7 +32,13 @@ export default function AuthPage() {
           },
         })
         if (error) throw error
-        alert(t('auth.checkEmail'))
+
+        // If email confirmation is disabled, session is returned immediately
+        if (data.session) {
+          router.push('/app')
+        } else {
+          alert(t('auth.checkEmail'))
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -41,8 +47,9 @@ export default function AuthPage() {
         if (error) throw error
         router.push('/app')
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -60,8 +67,9 @@ export default function AuthPage() {
         },
       })
       if (error) throw error
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred'
+      setError(message)
       setLoading(false)
     }
   }
