@@ -13,7 +13,6 @@ export default function SettingsPage() {
   const [emailEnabled, setEmailEnabled] = useState(false)
   const [inAppEnabled, setInAppEnabled] = useState(false)
   const [reminderDays, setReminderDays] = useState(30)
-  const [claimDays, setClaimDays] = useState(7)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +28,7 @@ export default function SettingsPage() {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('reminder_enabled, reminder_days, in_app_enabled, claim_days')
+        .select('reminder_enabled, reminder_days, in_app_enabled')
         .eq('user_id', user.id)
         .single()
 
@@ -39,7 +38,6 @@ export default function SettingsPage() {
         setEmailEnabled(data.reminder_enabled ?? false)
         setInAppEnabled(data.in_app_enabled ?? false)
         setReminderDays(REMINDER_PRESETS.includes(data.reminder_days) ? data.reminder_days : 30)
-        setClaimDays(REMINDER_PRESETS.includes(data.claim_days) ? data.claim_days : 7)
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error loading settings'
@@ -62,7 +60,6 @@ export default function SettingsPage() {
           reminder_enabled: emailEnabled,
           reminder_days: reminderDays,
           in_app_enabled: inAppEnabled,
-          claim_days: claimDays,
           locale,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id' })
@@ -167,27 +164,6 @@ export default function SettingsPage() {
                       onClick={() => setReminderDays(days)}
                       className={`px-4 py-2 text-xs uppercase tracking-widest border transition-all ${
                         reminderDays === days
-                          ? 'border-[#ff3131] text-[#ff3131] bg-[#ff3131]/10'
-                          : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300'
-                      }`}
-                    >
-                      {days} days before
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="px-6 py-5">
-                <p className="text-sm font-medium text-white mb-1">Claim Deadline Notice</p>
-                <p className="text-xs text-gray-500 mb-4">When should we notify you before a claim deadline?</p>
-                <div className="flex flex-wrap gap-2">
-                  {REMINDER_PRESETS.map((days) => (
-                    <button
-                      key={days}
-                      type="button"
-                      onClick={() => setClaimDays(days)}
-                      className={`px-4 py-2 text-xs uppercase tracking-widest border transition-all ${
-                        claimDays === days
                           ? 'border-[#ff3131] text-[#ff3131] bg-[#ff3131]/10'
                           : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300'
                       }`}
