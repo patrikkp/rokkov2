@@ -4,7 +4,7 @@ import Link from 'next/link'
 import WarrantyActions from '@/components/WarrantyActions'
 import ReceiptImage from '@/components/ReceiptImage'
 import ReceiptLink from '@/components/ReceiptLink'
-import ShareWarranty from '@/components/ShareWarranty'
+import DownloadWarranty from '@/components/DownloadWarranty'
 import EUWarrantyInfo from '@/components/EUWarrantyInfo'
 import { useI18n } from '@/lib/i18n/context'
 import type { Database } from '@/lib/supabase/types'
@@ -66,7 +66,7 @@ export default function WarrantyDetailClient({ warranty }: WarrantyDetailClientP
             )}
           </div>
           <div className="flex items-center gap-4">
-            <ShareWarranty warranty={warranty} />
+            <DownloadWarranty warranty={warranty} />
             <div className={`text-sm uppercase tracking-widest ${status.color}`}>
               {status.label}
             </div>
