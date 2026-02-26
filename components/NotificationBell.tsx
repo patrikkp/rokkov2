@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useI18n } from '@/lib/i18n/context'
 
 type ExpiringWarranty = {
   id: string
@@ -12,6 +13,7 @@ type ExpiringWarranty = {
 }
 
 export default function NotificationBell() {
+  const { t } = useI18n()
   const supabase = createClient()
   const [notifications, setNotifications] = useState<ExpiringWarranty[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -38,7 +40,9 @@ export default function NotificationBell() {
 
   const checkNotifications = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
 
       const { data: settings } = await supabase
@@ -90,7 +94,7 @@ export default function NotificationBell() {
         className={`w-12 h-12 rounded-full border-2 bg-black transition-all flex items-center justify-center relative ${
           isOpen ? 'border-[#ff3131]' : 'border-gray-800 hover:border-[#ff3131]'
         }`}
-        aria-label="Notifications"
+        aria-label={t('notif.title')}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -119,17 +123,16 @@ export default function NotificationBell() {
 
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
           <div className="absolute top-14 right-0 w-72 bg-[#0a0a0a] border border-gray-800 shadow-2xl shadow-black/50 z-40 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-widest text-gray-500">Notifications</p>
+              <p className="text-xs uppercase tracking-widest text-gray-500">{t('notif.title')}</p>
               {notifications.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#ff3131] animate-pulse" />
-                  <span className="text-xs text-[#ff3131]">{notifications.length} expiring</span>
+                  <span className="text-xs text-[#ff3131]">
+                    {notifications.length} {t('notif.expiring')}
+                  </span>
                 </div>
               )}
             </div>
@@ -151,7 +154,7 @@ export default function NotificationBell() {
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                   <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-                <p className="text-xs text-gray-600 uppercase tracking-wider">All warranties are fine</p>
+                <p className="text-xs text-gray-600 uppercase tracking-wider">{t('notif.allGood')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-800/50 max-h-64 overflow-y-auto">
@@ -185,7 +188,7 @@ export default function NotificationBell() {
                           : 'text-gray-400'
                       }`}
                     >
-                      {w.daysLeft === 0 ? 'Today!' : `${w.daysLeft}d`}
+                      {w.daysLeft === 0 ? t('notif.today') : `${w.daysLeft}${t('notif.daysShort')}`}
                     </span>
                   </Link>
                 ))}

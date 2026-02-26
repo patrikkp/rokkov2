@@ -173,6 +173,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.saved': 'Settings saved!',
     'settings.save': 'Save Settings',
     'settings.back': '← Back to Dashboard',
+    'settings.channelsTitle': 'Notification Channels',
+    'settings.emailTitle': 'Email Notifications',
+    'settings.emailDesc': 'Receive notifications about warranty expirations via email',
+    'settings.inAppTitle': 'In-App Notifications',
+    'settings.inAppDesc': 'Receive notifications within the application',
+    'settings.timingTitle': 'Notification Timing',
+    'settings.warrantyNoticeTitle': 'Warranty Expiration Notice',
+    'settings.warrantyNoticeDesc': 'When should we notify you before a warranty expires?',
+    'settings.daysBefore': '{days} days before',
+
+    // Notifications (in-app)
+    'notif.title': 'Notifications',
+    'notif.expiring': 'expiring',
+    'notif.allGood': 'All warranties are fine',
+    'notif.today': 'Today!',
+    'notif.daysShort': 'd',
+
+    // Common
+    'common.notAuthenticated': 'Not authenticated',
+    'common.errorLoadingSettings': 'Error loading settings',
+    'common.errorSavingSettings': 'Error saving settings',
 
     // Share
     'share.title': 'Share Warranty',
@@ -380,6 +401,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.saved': 'Postavke spremljene!',
     'settings.save': 'Spremi postavke',
     'settings.back': '← Natrag na nadzornu ploču',
+    'settings.channelsTitle': 'Kanali obavijesti',
+    'settings.emailTitle': 'Email obavijesti',
+    'settings.emailDesc': 'Primaj obavijesti o isteku garancije putem emaila',
+    'settings.inAppTitle': 'Obavijesti u aplikaciji',
+    'settings.inAppDesc': 'Primaj obavijesti unutar aplikacije',
+    'settings.timingTitle': 'Vrijeme obavijesti',
+    'settings.warrantyNoticeTitle': 'Obavijest o isteku garancije',
+    'settings.warrantyNoticeDesc': 'Kada te trebamo obavijestiti prije isteka garancije?',
+    'settings.daysBefore': '{days} dana prije',
+
+    // Notifications (in-app)
+    'notif.title': 'Obavijesti',
+    'notif.expiring': 'ističe',
+    'notif.allGood': 'Sve garancije su u redu',
+    'notif.today': 'Danas!',
+    'notif.daysShort': 'd',
+
+    // Common
+    'common.notAuthenticated': 'Niste prijavljeni',
+    'common.errorLoadingSettings': 'Greška pri učitavanju postavki',
+    'common.errorSavingSettings': 'Greška pri spremanju postavki',
 
     // Share
     'share.title': 'Podijeli garanciju',
@@ -587,6 +629,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.saved': 'Podešavanja sačuvana!',
     'settings.save': 'Sačuvaj podešavanja',
     'settings.back': '← Nazad na kontrolnu tablu',
+    'settings.channelsTitle': 'Kanali obaveštenja',
+    'settings.emailTitle': 'Email obaveštenja',
+    'settings.emailDesc': 'Primaj obaveštenja o isteku garancije putem emaila',
+    'settings.inAppTitle': 'Obaveštenja u aplikaciji',
+    'settings.inAppDesc': 'Primaj obaveštenja unutar aplikacije',
+    'settings.timingTitle': 'Vreme obaveštenja',
+    'settings.warrantyNoticeTitle': 'Obaveštenje o isteku garancije',
+    'settings.warrantyNoticeDesc': 'Kada treba da te obavestimo pre isteka garancije?',
+    'settings.daysBefore': 'Pre {days} dana',
+
+    // Notifications (in-app)
+    'notif.title': 'Obaveštenja',
+    'notif.expiring': 'ističe',
+    'notif.allGood': 'Sve garancije su u redu',
+    'notif.today': 'Danas!',
+    'notif.daysShort': 'd',
+
+    // Common
+    'common.notAuthenticated': 'Niste prijavljeni',
+    'common.errorLoadingSettings': 'Greška pri učitavanju podešavanja',
+    'common.errorSavingSettings': 'Greška pri čuvanju podešavanja',
 
     // Share
     'share.title': 'Podeli garanciju',
@@ -794,6 +857,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.saved': 'Einstellungen gespeichert!',
     'settings.save': 'Einstellungen speichern',
     'settings.back': '← Zurück zum Dashboard',
+    'settings.channelsTitle': 'Benachrichtigungskanäle',
+    'settings.emailTitle': 'E-Mail-Benachrichtigungen',
+    'settings.emailDesc': 'Erhalte Benachrichtigungen über ablaufende Garantien per E-Mail',
+    'settings.inAppTitle': 'In-App-Benachrichtigungen',
+    'settings.inAppDesc': 'Erhalte Benachrichtigungen innerhalb der Anwendung',
+    'settings.timingTitle': 'Benachrichtigungszeitpunkt',
+    'settings.warrantyNoticeTitle': 'Hinweis zum Garantieablauf',
+    'settings.warrantyNoticeDesc': 'Wann sollen wir dich vor dem Ablauf einer Garantie benachrichtigen?',
+    'settings.daysBefore': '{days} Tage vorher',
+
+    // Notifications (in-app)
+    'notif.title': 'Benachrichtigungen',
+    'notif.expiring': 'läuft ab',
+    'notif.allGood': 'Alle Garantien sind in Ordnung',
+    'notif.today': 'Heute!',
+    'notif.daysShort': 'T',
+
+    // Common
+    'common.notAuthenticated': 'Nicht angemeldet',
+    'common.errorLoadingSettings': 'Fehler beim Laden der Einstellungen',
+    'common.errorSavingSettings': 'Fehler beim Speichern der Einstellungen',
 
     // Share
     'share.title': 'Garantie teilen',
@@ -1001,6 +1085,27 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.saved': 'Nastavitve shranjene!',
     'settings.save': 'Shrani nastavitve',
     'settings.back': '← Nazaj na nadzorno ploščo',
+    'settings.channelsTitle': 'Kanali obvestil',
+    'settings.emailTitle': 'E-poštna obvestila',
+    'settings.emailDesc': 'Prejemaj obvestila o poteku garancije po e-pošti',
+    'settings.inAppTitle': 'Obvestila v aplikaciji',
+    'settings.inAppDesc': 'Prejemaj obvestila znotraj aplikacije',
+    'settings.timingTitle': 'Čas obvestil',
+    'settings.warrantyNoticeTitle': 'Obvestilo o poteku garancije',
+    'settings.warrantyNoticeDesc': 'Kdaj te naj obvestimo pred potekom garancije?',
+    'settings.daysBefore': '{days} dni prej',
+
+    // Notifications (in-app)
+    'notif.title': 'Obvestila',
+    'notif.expiring': 'poteče',
+    'notif.allGood': 'Vse garancije so v redu',
+    'notif.today': 'Danes!',
+    'notif.daysShort': 'd',
+
+    // Common
+    'common.notAuthenticated': 'Niste prijavljeni',
+    'common.errorLoadingSettings': 'Napaka pri nalaganju nastavitev',
+    'common.errorSavingSettings': 'Napaka pri shranjevanju nastavitev',
 
     // Share
     'share.title': 'Deli garancijo',

@@ -19,12 +19,15 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadSettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadSettings = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error(t('common.notAuthenticated'))
 
       const { data, error } = await supabase
         .from('user_settings')
@@ -40,7 +43,7 @@ export default function SettingsPage() {
         setReminderDays(REMINDER_PRESETS.includes(data.reminder_days) ? data.reminder_days : 30)
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error loading settings'
+      const msg = err instanceof Error ? err.message : t('common.errorLoadingSettings')
       setError(msg)
     } finally {
       setLoading(false)
@@ -50,26 +53,31 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setError(null)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not authenticated')
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error(t('common.notAuthenticated'))
 
       const { error } = await supabase
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          reminder_enabled: emailEnabled,
-          reminder_days: reminderDays,
-          in_app_enabled: inAppEnabled,
-          locale,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' })
+        .upsert(
+          {
+            user_id: user.id,
+            reminder_enabled: emailEnabled,
+            reminder_days: reminderDays,
+            in_app_enabled: inAppEnabled,
+            locale,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        )
 
       if (error) throw error
 
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error saving settings'
+      const msg = err instanceof Error ? err.message : t('common.errorSavingSettings')
       setError(msg)
     }
   }
@@ -94,9 +102,7 @@ export default function SettingsPage() {
           {t('settings.back')}
         </Link>
 
-        <h1 className="text-5xl font-bold tracking-tight uppercase mb-12">
-          {t('settings.title')}
-        </h1>
+        <h1 className="text-5xl font-bold tracking-tight uppercase mb-12">{t('settings.title')}</h1>
 
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 text-red-400 rounded">
@@ -105,16 +111,16 @@ export default function SettingsPage() {
         )}
 
         <div className="space-y-8">
-
           {/* Notification Channels */}
           <section>
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Notification Channels</h2>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">
+              {t('settings.channelsTitle')}
+            </h2>
             <div className="border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
-
               <div className="flex items-center justify-between px-6 py-5">
                 <div>
-                  <p className="text-sm font-medium text-white">Email Notifications</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Receive notifications about warranty expirations via email</p>
+                  <p className="text-sm font-medium text-white">{t('settings.emailTitle')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('settings.emailDesc')}</p>
                 </div>
                 <div
                   onClick={() => setEmailEnabled(!emailEnabled)}
@@ -122,16 +128,18 @@ export default function SettingsPage() {
                     emailEnabled ? 'bg-[#ff3131]' : 'bg-gray-800'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${
-                    emailEnabled ? 'left-6' : 'left-0.5'
-                  }`} />
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${
+                      emailEnabled ? 'left-6' : 'left-0.5'
+                    }`}
+                  />
                 </div>
               </div>
 
               <div className="flex items-center justify-between px-6 py-5">
                 <div>
-                  <p className="text-sm font-medium text-white">In-App Notifications</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Receive notifications within the application</p>
+                  <p className="text-sm font-medium text-white">{t('settings.inAppTitle')}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{t('settings.inAppDesc')}</p>
                 </div>
                 <div
                   onClick={() => setInAppEnabled(!inAppEnabled)}
@@ -139,23 +147,25 @@ export default function SettingsPage() {
                     inAppEnabled ? 'bg-[#ff3131]' : 'bg-gray-800'
                   }`}
                 >
-                  <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${
-                    inAppEnabled ? 'left-6' : 'left-0.5'
-                  }`} />
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${
+                      inAppEnabled ? 'left-6' : 'left-0.5'
+                    }`}
+                  />
                 </div>
               </div>
-
             </div>
           </section>
 
           {/* Notification Timing */}
           <section>
-            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">Notification Timing</h2>
+            <h2 className="text-xs uppercase tracking-widest text-gray-500 mb-4">
+              {t('settings.timingTitle')}
+            </h2>
             <div className="border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
-
               <div className="px-6 py-5">
-                <p className="text-sm font-medium text-white mb-1">Warranty Expiration Notice</p>
-                <p className="text-xs text-gray-500 mb-4">When should we notify you before a warranty expires?</p>
+                <p className="text-sm font-medium text-white mb-1">{t('settings.warrantyNoticeTitle')}</p>
+                <p className="text-xs text-gray-500 mb-4">{t('settings.warrantyNoticeDesc')}</p>
                 <div className="flex flex-wrap gap-2">
                   {REMINDER_PRESETS.map((days) => (
                     <button
@@ -168,12 +178,11 @@ export default function SettingsPage() {
                           : 'border-gray-800 text-gray-500 hover:border-gray-600 hover:text-gray-300'
                       }`}
                     >
-                      {days} days before
+                      {t('settings.daysBefore').replace('{days}', String(days))}
                     </button>
                   ))}
                 </div>
               </div>
-
             </div>
           </section>
 
@@ -186,7 +195,6 @@ export default function SettingsPage() {
               {saved ? `✓ ${t('settings.saved')}` : t('settings.save')}
             </button>
           </div>
-
         </div>
       </div>
     </main>
